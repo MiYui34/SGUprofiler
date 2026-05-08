@@ -26,6 +26,10 @@ import java.util.stream.Collectors;
 
 public class SGUProfiler {
     private static final Object SNAPSHOT_ID_LOCK = new Object();
+
+    /** 单次报告与上报快照：按合计 ms/Tick 降序，最多展示的「实体 × 维度」汇总条数。 */
+    private static final int REPORT_TOP_AGGREGATES = 10;
+
     private static String lastSnapshotDay = "";
     private static int snapshotCountThisDay = 0;
 
@@ -324,12 +328,21 @@ public class SGUProfiler {
 
         try {
             long ticks = effectiveTickCount();
-            List<String> web = new LinkedList<>();
 
+            List<ProfileKey> byTotalDesc = lagSources.entrySet().stream()
+                    .sorted(Map.Entry.<ProfileKey, LagSource>comparingByValue(
+                            Comparator.comparingLong((LagSource ls) -> ls.sum()).reversed()))
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
+
+            List<ProfileKey> shownKeys =
+                    byTotalDesc.stream().limit(REPORT_TOP_AGGREGATES).collect(Collectors.toList());
+
+            List<String> web = new LinkedList<>();
             DoubleSummaryStatistics avgStats = new DoubleSummaryStatistics();
-            for (Map.Entry<ProfileKey, LagSource> en : lagSources.entrySet()) {
-                ProfileKey pk = en.getKey();
-                for (Map.Entry<LagType, Long> le : en.getValue().lags.entrySet()) {
+            for (ProfileKey pk : shownKeys) {
+                LagSource agg = lagSources.get(pk);
+                for (Map.Entry<LagType, Long> le : agg.lags.entrySet()) {
                     double avgMs = nsToAvgMsPerTick(le.getValue());
                     avgStats.accept(avgMs);
                     String dimPath = pk.dimension().getValue().getPath();
@@ -340,12 +353,6 @@ public class SGUProfiler {
 
             double maxAvg = avgStats.getCount() > 0 ? avgStats.getMax() : 0.0;
 
-            List<ProfileKey> byTotalDesc = lagSources.entrySet().stream()
-                    .sorted(Map.Entry.<ProfileKey, LagSource>comparingByValue(
-                            Comparator.comparingLong((LagSource ls) -> ls.sum()).reversed()))
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toList());
-
             Messenger.m(src, "lb [SGUProfiler] 采样报告");
             if (sessionKind != SessionKind.MANUAL) {
                 Messenger.m(src, "f （自动结束）");
@@ -355,13 +362,18 @@ public class SGUProfiler {
                             || config.tickSampleMode != TickSampleMode.STRIDE_ONLY
                             || sampledTickCount < sessionCompletedTicks;
             String tickLabel = tickThrottled ? "有效采样刻" : "游戏刻";
+            int shownAgg = shownKeys.size();
             Messenger.m(
                     src,
                     "f 已统计 ",
                     "w " + ticks,
-                    "f  " + tickLabel + " · 共 ",
+                    "f  " + tickLabel + " · 聚合 ",
                     "w " + byTotalDesc.size(),
-                    "f  条实体-维度汇总 · 按合计 ms/Tick 由高到低");
+                    "f  条实体-维度汇总 · 展示合计最高的 ",
+                    "w " + shownAgg,
+                    "f  条（最多 ",
+                    "w " + REPORT_TOP_AGGREGATES,
+                    "f  条，按 ms/Tick 降序）");
             if (tickThrottled) {
                 Messenger.m(
                         src,
@@ -398,7 +410,7 @@ public class SGUProfiler {
                 Messenger.m(src, "w ");
             }
 
-            for (ProfileKey pk : byTotalDesc) {
+            for (ProfileKey pk : shownKeys) {
                 LagSource agg = lagSources.get(pk);
                 double entityTotalMs = nsToAvgMsPerTick(agg.sum());
                 String entityName = pk.type().getName().getString();
