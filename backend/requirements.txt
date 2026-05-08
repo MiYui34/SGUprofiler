@@ -1,0 +1,8 @@
+python-dotenv==1.0.1
+
+fastapi==0.115.8
+uvicorn[standard]==0.33.0
+itsdangerous>=2.2.0
+argon2-cffi==23.1.0
+slowapi==0.1.9
+python-multipart==0.0.20

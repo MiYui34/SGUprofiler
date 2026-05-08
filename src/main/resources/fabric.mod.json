@@ -1,0 +1,52 @@
+{
+
+  "schemaVersion": 1,
+
+  "id": "sguprofiler",
+
+  "version": "${version}",
+
+  "name": "SGUProfiler",
+
+  "description": "Server-side entity tick profiler with optional upload to the SGUProfiler web panel.",
+
+  "authors": ["MiYui","AntiDeath"],
+
+  "license": "MIT",
+
+  "environment": "*",
+
+  "entrypoints": {
+
+    "main": [
+
+      "xin.sgu_server.sguprofiler.Main"
+
+    ]
+
+  },
+
+  "mixins": ["sguprofiler.mixins.json"],
+
+  "depends": {
+
+    "fabricloader": ">=0.16.0",
+
+    "minecraft": "~1.21.6",
+
+    "java": ">=21",
+
+    "fabric-api": "*"
+
+  },
+
+  "breaks": {},
+
+  "suggests": {
+
+    "carpet": "*"
+
+  }
+
+}
+

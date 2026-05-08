@@ -1,0 +1,1 @@
+# 占位：保证仓库中存在 data 目录；运行时 users.json / snapshots / profiler_allowed_uuids.json 等写在此目录。

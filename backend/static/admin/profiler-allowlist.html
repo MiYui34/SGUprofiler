@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN" class="auth-pending">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SGUProfiler · 命令白名单</title>
+    <script>
+    (function(){try{var t=localStorage.getItem('sgu_theme');if(!t){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+    </script>
+    <link rel="stylesheet" href="/css/app.css?v=3" />
+    <script defer src="/js/app.js?v=3"></script>
+</head>
+<body class="page-app">
+<header class="app-header">
+    <div class="app-header__inner">
+        <div class="header-row--brand">
+            <div class="brand">
+                <span class="brand__title">SGUProfiler</span>
+                <span class="brand__tag">管理员 · 游戏命令 UUID</span>
+            </div>
+            <div class="session-slot">
+                <span id="sessionBadge" class="muted small hidden" aria-live="polite"></span>
+                <button id="navLogoutBtn" type="button" class="hidden">退出</button>
+            </div>
+        </div>
+        <nav class="topnav" aria-label="主导航">
+            <a data-nav href="/">首页</a>
+            <a data-nav href="/snapshots.html">快照</a>
+            <a data-nav href="/analysis.html">分析</a>
+            <a data-nav href="/admin/profiler-allowlist.html">命令白名单</a>
+            <a data-nav href="/admin/users.html">用户</a>
+        </nav>
+    </div>
+</header>
+
+<div class="shell">
+    <h1 class="page-title">游戏内命令白名单</h1>
+    <p class="page-lead">
+        存储于 <code>data/profiler_allowed_uuids.json</code>，写入<strong>正版玩家 UUID</strong>（无 dashes 亦可，保存时会规范化）。
+        拥有 <strong>OP</strong> 的玩家始终可使用 <code>/SGUProfiler</code>；非 OP 需在此列表中。模组定期用与上报相同的密钥拉取本列表。
+    </p>
+
+    <div class="panel panel-narrow">
+        <form id="addUuidForm" class="form-stack" autocomplete="off">
+            <label class="muted small" for="playerUuid">玩家 UUID</label>
+            <input id="playerUuid" type="text" placeholder="例：550e8400-e29b-41d4-a716-446655440000" autocomplete="off" />
+            <div class="row-actions">
+                <button class="primary" type="submit">添加</button>
+                <button type="button" id="reloadBtn" class="secondary">刷新列表</button>
+            </div>
+        </form>
+        <div id="listMount" class="note-box small" style="margin-top:14px;">
+            <p class="muted small">加载中…</p>
+        </div>
+        <div class="note-box small muted">
+            仅<strong>管理员</strong>可调用下方 API；未取得权限时返回 <code>403</code>。
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        const SGU = window.SGU;
+
+        function fail(msg) {
+            const text = String(msg);
+            if (SGU && typeof SGU.alertModal === "function") {
+                SGU.alertModal(text, { title: "错误" });
+            } else {
+                alert(text);
+            }
+        }
+
+        if (!SGU || !SGU.whenReady) {
+            fail("页面核心脚本未加载成功。");
+            document.documentElement.classList.remove("auth-pending");
+            return;
+        }
+
+        await SGU.whenReady;
+        document.documentElement.classList.remove("auth-pending");
+
+        const listMount = document.getElementById("listMount");
+
+        async function loadList() {
+            listMount.innerHTML = '<p class="muted small">加载中…</p>';
+            try {
+                const data = await SGU.api("/api/v1/admin/profiler-allowlist", { method: "GET" });
+                const uuids = Array.isArray(data.uuids) ? data.uuids : [];
+                if (!uuids.length) {
+                    listMount.innerHTML = '<p class="muted small">暂无条目。</p>';
+                    return;
+                }
+                const ul = document.createElement("ul");
+                ul.style.margin = "0";
+                ul.style.paddingLeft = "1.2em";
+                for (const id of uuids) {
+                    const li = document.createElement("li");
+                    li.style.marginBottom = "8px";
+                    const code = document.createElement("code");
+                    code.textContent = id;
+                    li.appendChild(code);
+                    const sp = document.createElement("span");
+                    sp.innerHTML = "&nbsp;";
+                    li.appendChild(sp);
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.textContent = "删除";
+                    btn.className = "secondary";
+                    btn.style.fontSize = "12px";
+                    btn.addEventListener("click", async () => {
+                        if (!confirm("删除 " + id + " ？")) return;
+                        try {
+                            await SGU.api(
+                                "/api/v1/admin/profiler-allowlist/" + encodeURIComponent(id),
+                                { method: "DELETE" }
+                            );
+                            await loadList();
+                        } catch (e) {
+                            fail(String(e.message || e));
+                        }
+                    });
+                    li.appendChild(btn);
+                    ul.appendChild(li);
+                }
+                listMount.innerHTML = "";
+                listMount.appendChild(ul);
+            } catch (err) {
+                listMount.innerHTML = '<p class="muted small">加载失败（需管理员登录）。</p>';
+                fail(String(err.message || err));
+            }
+        }
+
+        document.getElementById("reloadBtn")?.addEventListener("click", () => loadList());
+
+        document.getElementById("addUuidForm")?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const raw = document.getElementById("playerUuid").value.trim();
+            if (!raw) {
+                fail("请输入 UUID");
+                return;
+            }
+            try {
+                await SGU.api("/api/v1/admin/profiler-allowlist", {
+                    method: "POST",
+                    body: JSON.stringify({ uuid: raw }),
+                });
+                document.getElementById("playerUuid").value = "";
+                SGU.alertModal("已添加", { title: "成功" });
+                await loadList();
+            } catch (err) {
+                fail("添加失败：" + String(err.message || err));
+            }
+        });
+
+        await loadList();
+    });
+</script>
+</body>
+</html>

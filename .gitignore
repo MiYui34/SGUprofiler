@@ -1,0 +1,70 @@
+# Gradle / Fabric / Java
+
+.gradle/
+
+build/
+
+out/
+
+*.class
+
+run/
+
+eclipse/
+
+bin/
+
+
+
+# Gradle 本地离线包（体积大；按 gradle/distribution/README.txt 自行放置）
+
+gradle/distribution/*.zip
+
+
+
+# IDE
+
+.idea/
+
+*.iml
+
+
+
+# Secrets & local env（勿提交 ingest / session 密钥）
+**/.env
+!**/.env.example
+
+
+
+# Python
+
+__pycache__/
+
+*.py[cod]
+
+.venv/
+
+*.egg-info/
+
+dist/
+
+
+
+# 后端本地数据（运行时生成；保留空目录占位）
+
+backend/data/**
+
+!backend/data/
+
+!backend/data/.gitkeep
+
+
+
+# OS
+
+.DS_Store
+
+Thumbs.db
+
+Desktop.ini
+

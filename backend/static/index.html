@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SGUProfiler · 控制台</title>
+    <script>
+    (function(){try{var t=localStorage.getItem('sgu_theme');if(!t){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+    </script>
+    <link rel="stylesheet" href="/css/app.css?v=3" />
+    <script defer src="/js/app.js?v=3"></script>
+</head>
+<body class="page-dashboard">
+<header class="app-header">
+    <div class="app-header__inner">
+        <div class="header-row--brand">
+            <div class="brand">
+                <span class="brand__title">SGUProfiler</span>
+                <span class="brand__tag">Minecraft Fabric 服务端 · 实体采样</span>
+            </div>
+            <div class="session-slot">
+                <span id="sessionBadge" class="muted small hidden" aria-live="polite"></span>
+                <button id="navLogoutBtn" type="button" class="hidden">退出</button>
+            </div>
+        </div>
+        <nav class="topnav" aria-label="主导航">
+            <a data-nav href="/">首页</a>
+            <a data-nav href="/snapshots.html">快照</a>
+            <a data-nav href="/analysis.html">分析</a>
+            <a data-nav href="/admin/profiler-allowlist.html">命令白名单</a>
+            <a data-nav href="/admin/users.html">用户</a>
+        </nav>
+    </div>
+</header>
+
+<div class="shell shell--dashboard">
+    <div class="dash-backdrop" aria-hidden="true"></div>
+
+    <div class="dash-main">
+        <header class="dash-hero">
+            <p class="dash-hero__eyebrow">概览</p>
+            <h1 class="dash-hero__title">控制台</h1>
+            <p class="dash-hero__lead">
+                游戏内使用
+                <code>/SGUProfiler profile start</code>
+                与
+                <code>/SGUProfiler profile stop</code>
+                完成默认实体采样并上报；在「快照」浏览记录，在「分析」按实体查看卡顿汇总；在「用户」管理子账号（管理员）。
+            </p>
+        </header>
+
+        <section class="dash-grid" aria-label="功能入口">
+            <a class="dash-tile dash-tile--snapshots" href="/snapshots.html">
+                <span class="dash-tile__icon" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M4 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                        <path d="M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <div class="dash-tile__body">
+                    <h2 class="dash-tile__title">快照</h2>
+                    <p class="dash-tile__desc">浏览索引、查看单条 JSON 明细。</p>
+                </div>
+                <span class="dash-tile__chev" aria-hidden="true">→</span>
+            </a>
+
+            <a class="dash-tile dash-tile--analysis" href="/analysis.html">
+                <span class="dash-tile__icon" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M4 19V5M4 19h16M8 17V9M12 17v-5M16 17v-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <div class="dash-tile__body">
+                    <h2 class="dash-tile__title">分析</h2>
+                    <p class="dash-tile__desc">按实体查看 TICK 卡顿并可展开明细。</p>
+                </div>
+                <span class="dash-tile__chev" aria-hidden="true">→</span>
+            </a>
+
+            <a class="dash-tile" href="/admin/profiler-allowlist.html">
+                <span class="dash-tile__icon" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M12 11a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M5 20a7 7 0 0114 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <div class="dash-tile__body">
+                    <h2 class="dash-tile__title">命令白名单</h2>
+                    <p class="dash-tile__desc">维护可使用 /SGUProfiler 的正版玩家 UUID。</p>
+                </div>
+                <span class="dash-tile__chev" aria-hidden="true">→</span>
+            </a>
+
+            <a class="dash-tile dash-tile--users" href="/admin/users.html">
+                <span class="dash-tile__icon" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M12 12a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M4 20a8 8 0 0116 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M18 9h2M19 8v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <div class="dash-tile__body">
+                    <h2 class="dash-tile__title">用户管理</h2>
+                    <p class="dash-tile__desc">管理员创建子账号（密码不少于 6 位）。</p>
+                </div>
+                <span class="dash-tile__chev" aria-hidden="true">→</span>
+            </a>
+        </section>
+
+        <aside class="dash-security note-box small muted">
+            <strong class="dash-security__tag">安全</strong>
+            公网部署请使用反向代理 TLS，定期轮换
+            <code>SGUPROF_INGEST_SECRET</code>
+            ，勿在仓库中提交
+            <code>data/users.json</code>
+            。
+        </aside>
+    </div>
+</div>
+</body>
+</html>

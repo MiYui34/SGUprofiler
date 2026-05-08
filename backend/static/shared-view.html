@@ -1,0 +1,352 @@
+<!doctype html>
+
+<html lang="zh-CN">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>SGUProfiler · 只读分享</title>
+    <script>
+    (function(){try{var t=localStorage.getItem('sgu_theme');if(!t){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+    </script>
+    <link rel="stylesheet" href="/css/app.css?v=3" />
+
+    <script defer src="/js/app.js?v=3"></script>
+
+    <style>
+
+        .share-banner {
+
+            border: 1px solid var(--line);
+
+            border-radius: var(--radius);
+
+            padding: 12px 14px;
+
+            background: var(--accent-bg);
+
+            margin-bottom: 16px;
+
+        }
+
+        .data-table-wrap { overflow-x: auto; margin: 10px 0 20px; }
+
+        table.data-table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            font-size: 13px;
+
+        }
+
+        table.data-table th, table.data-table td {
+
+            border: 1px solid color-mix(in oklab, var(--line) 85%, transparent);
+
+            padding: 6px 9px;
+
+            text-align: left;
+
+            vertical-align: top;
+
+        }
+
+        table.data-table th { background: color-mix(in oklab, var(--surface) 88%, var(--accent) 12%); }
+
+        .subhead-mini { font-size: 1rem; margin: 18px 0 6px; }
+
+        .err-box {
+
+            border: 1px solid rgba(200, 80, 80, .45);
+
+            border-radius: var(--radius);
+
+            padding: 10px 14px;
+
+            margin-bottom: 14px;
+
+            background: rgba(200, 80, 80, .09);
+
+        }
+
+    </style>
+
+</head>
+
+<body class="page-app">
+
+<div class="shell">
+
+    <header class="share-banner" role="status">
+
+        <strong>只读分享</strong>
+
+        <span class="muted"> — 本页通过分享令牌查看快照，不含登录态，无法修改服务器数据。</span>
+
+    </header>
+
+    <h1 class="page-title">采样快照</h1>
+
+    <p id="lead" class="page-lead muted">正在加载…</p>
+
+    <div id="err" class="hidden err-box" role="alert"></div>
+
+    <div id="host"></div>
+
+    <p class="muted small" style="margin-top:28px">
+
+        SGUProfiler · 如需管理快照请使用已登录的「快照」页面。
+
+    </p>
+
+</div>
+
+<script>
+
+(function () {
+
+    'use strict';
+
+
+
+    function esc(t) {
+
+        return String(t ?? '')
+
+            .replace(/&/g, '&amp;')
+
+            .replace(/</g, '&lt;')
+
+            .replace(/>/g, '&gt;')
+
+            .replace(/"/g, '&quot;');
+
+    }
+
+
+
+    /** @param {[string,string][]} cols @param {Record<string,unknown>[]} rows */
+
+    function tableHtml(cols, rows) {
+
+        let h = '<div class="data-table-wrap"><table class="data-table"><thead><tr>';
+
+        for (const [k, lab] of cols) h += `<th>${esc(lab)}</th>`;
+
+        h += '</tr></thead><tbody>';
+
+        for (const r of rows) {
+
+            h += '<tr>';
+
+            for (const [k] of cols) {
+
+                const v = r[k];
+
+                h += `<td>${esc(v === undefined || v === null ? '' : v)}</td>`;
+
+            }
+
+            h += '</tr>';
+
+        }
+
+        h += '</tbody></table></div>';
+
+        return h;
+
+    }
+
+
+
+    /** 默认实体采样 lagData */
+    /** @param {Record<string,unknown>} data */
+    function renderEntityLag(data) {
+        const raw = data.lagData;
+        const list = Array.isArray(raw) ? raw.filter((x) => typeof x === "string") : [];
+        const groups = {};
+        for (const line of list) {
+            const parts = String(line).split("-").map((p) => p.trim());
+            if (parts.length < 3) continue;
+            const ent = String(parts[0]);
+            const lagName = parts.slice(1, -1).join("-") || "unknown";
+            const val = parseFloat(String(parts[parts.length - 1])) || 0;
+            if (!groups[ent]) groups[ent] = { total: 0, items: [] };
+            groups[ent].items.push({ name: lagName, val });
+            groups[ent].total += val;
+        }
+        const keys = Object.keys(groups).sort((a, b) => groups[b].total - groups[a].total);
+        if (!keys.length) {
+            return '<p class="muted">lagData 为空或无法解析。</p><pre class="pre-wrap">' + esc(JSON.stringify(data, null, 2)) + "</pre>";
+        }
+        const sumRows = keys.map((e) => ({
+            entity: e,
+            total: groups[e].total.toFixed(3),
+            n: groups[e].items.length,
+        }));
+        let html = '<h2 class="subhead-mini">实体 TICK 汇总</h2>';
+        html += tableHtml(
+            [
+                ["entity", "实体"],
+                ["total", "合计 (ms)"],
+                ["n", "子项数"],
+            ],
+            sumRows,
+        );
+        html += '<h2 class="subhead-mini">明细</h2><ul style="margin:0 0 18px;padding-left:1.2em;">';
+        for (const e of keys) {
+            const g = groups[e];
+            const top = [...g.items].sort((a, b) => b.val - a.val).slice(0, 16);
+            html += "<li><strong>" + esc(e) + "</strong> · 合计 " + g.total.toFixed(3) + " ms<br>";
+            html +=
+                '<span class="muted small">' +
+                top.map((it) => esc(it.name) + " " + it.val.toFixed(3) + " ms").join(" · ") +
+                (g.items.length > 16 ? " …" : "") +
+                "</span></li>";
+        }
+        html += "</ul>";
+        html += '<h2 class="subhead-mini">原始 JSON</h2><pre class="pre-wrap">' + esc(JSON.stringify(data, null, 2)) + "</pre>";
+        return html;
+    }
+
+
+    async function main() {
+
+        const SGU = window.SGU;
+
+        const token = new URLSearchParams(window.location.search || '').get('token');
+
+        const errEl = document.getElementById('err');
+
+        const host = document.getElementById('host');
+
+        const lead = document.getElementById('lead');
+
+        if (!host || !lead) return;
+
+        function showErr(titleText, detail) {
+            lead.textContent = titleText;
+            if (SGU && typeof SGU.alertModal === "function") {
+                SGU.alertModal(detail, { title: titleText });
+            } else if (errEl) {
+                errEl.textContent = detail;
+                errEl.classList.remove("hidden");
+            }
+        }
+
+
+
+        if (!token) {
+
+            lead.textContent = '缺少 token 参数';
+
+            showErr('缺少 token', '地址应类似 /shared-view.html?token=…');
+
+            return;
+
+        }
+
+
+
+        let data;
+
+        try {
+
+            const res = await fetch(`/api/v1/public/share/${encodeURIComponent(token)}`, {
+
+                method: 'GET',
+
+                credentials: 'omit',
+
+            });
+
+            const text = await res.text();
+
+            try {
+
+                data = text ? JSON.parse(text) : {};
+
+            } catch (_) {
+
+                throw new Error(text.slice(0, 200) || 'bad_json');
+
+            }
+
+            if (!res.ok) {
+
+                const d = data && data.detail;
+
+                throw new Error(typeof d === 'string' ? d : res.status + '');
+
+            }
+
+        } catch (e) {
+
+            const detail = '无法读取分享内容：' + String(e && e.message ? e.message : e);
+            showErr('加载失败', detail);
+
+            return;
+
+        }
+
+
+
+        const schema = data && data.schema;
+
+        const sid = data && data.snapshotId ? String(data.snapshotId) : '';
+
+        let sampleId = data && data.snapshotDisplayId ? String(data.snapshotDisplayId) : '';
+
+        if (!sampleId && SGU && typeof SGU.snapshotDisplayLabels === "function" && sid) {
+
+            const ts = Number(data.createdAtEpochMillis || 0);
+
+            const m = SGU.snapshotDisplayLabels([{ id: sid, createdAtEpochMillis: ts }]);
+
+            sampleId = m[sid] || "";
+
+        }
+
+        if (!sampleId) sampleId = sid || "?";
+
+        lead.textContent = `schema=${schema || "?"} · 采样 ${sampleId}`;
+
+
+
+        if (schema === 'entity_lag_v1') {
+
+            host.innerHTML = renderEntityLag(/** @type {Record<string,unknown>} */ (data));
+
+        } else {
+
+            host.innerHTML = '<pre class="pre-wrap">' + esc(JSON.stringify(data, null, 2)) + '</pre>';
+
+        }
+
+    }
+
+
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const SGU = window.SGU;
+        if (SGU && SGU.whenReady) {
+            try {
+                await SGU.whenReady;
+            } catch (_) { /* ignore */ }
+        }
+        void main();
+    });
+
+})();
+
+</script>
+
+</body>
+
+</html>
+
