@@ -12,10 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * 自 {@code config/sguprofiler.json} 读取；与 {@link IngestSecretLoader}
- * 共用同一文件，缺失字段使用默认值。
- */
+/** 自 {@code config/sguprofiler.json} 读取；缺失字段使用默认值。 */
 public final class SguprofilerConfig {
     public final int sampleEveryNTicks;
     public final long minProfileNanoseconds;
@@ -26,11 +23,21 @@ public final class SguprofilerConfig {
     public final int autoCooldownTicks;
     public final TickSampleMode tickSampleMode;
     public final double heavyLastTickMsThreshold;
-    public final String ingestHost;
-    public final int ingestPort;
     public final int permissionFallbackLevel;
-    public final boolean allowlistPullEnabled;
-    public final int allowlistPollTicks;
+
+    private static final String TEMPLATE_JSON = ""
+            + "{\n"
+            + "  \"permissionFallbackLevel\": 4,\n"
+            + "  \"sampleEveryNTicks\": 1,\n"
+            + "  \"minProfileNanoseconds\": 0,\n"
+            + "  \"tickSampleMode\": \"STRIDE_OR_HEAVY\",\n"
+            + "  \"heavyLastTickMsThreshold\": 0,\n"
+            + "  \"autoMsptThreshold\": 0,\n"
+            + "  \"autoProfileDurationTicks\": 200,\n"
+            + "  \"scheduledProfileIntervalMinutes\": 0,\n"
+            + "  \"scheduledProfileDurationTicks\": 12000,\n"
+            + "  \"autoCooldownTicks\": 100\n"
+            + "}\n";
 
     public SguprofilerConfig(
             int sampleEveryNTicks,
@@ -42,11 +49,7 @@ public final class SguprofilerConfig {
             int autoCooldownTicks,
             TickSampleMode tickSampleMode,
             double heavyLastTickMsThreshold,
-            String ingestHost,
-            int ingestPort,
-            int permissionFallbackLevel,
-            boolean allowlistPullEnabled,
-            int allowlistPollTicks) {
+            int permissionFallbackLevel) {
         this.sampleEveryNTicks = sampleEveryNTicks;
         this.minProfileNanoseconds = minProfileNanoseconds;
         this.autoMsptThreshold = autoMsptThreshold;
@@ -56,11 +59,7 @@ public final class SguprofilerConfig {
         this.autoCooldownTicks = autoCooldownTicks;
         this.tickSampleMode = tickSampleMode;
         this.heavyLastTickMsThreshold = heavyLastTickMsThreshold;
-        this.ingestHost = ingestHost;
-        this.ingestPort = ingestPort;
         this.permissionFallbackLevel = permissionFallbackLevel;
-        this.allowlistPullEnabled = allowlistPullEnabled;
-        this.allowlistPollTicks = allowlistPollTicks;
     }
 
     public static SguprofilerConfig defaults() {
@@ -74,11 +73,21 @@ public final class SguprofilerConfig {
                 100,
                 TickSampleMode.STRIDE_OR_HEAVY,
                 0.0,
-                "127.0.0.1",
-                8787,
-                2,
-                true,
-                600);
+                4);
+    }
+
+    /** 若不存在 {@code config/sguprofiler.json} 则写入模板。 */
+    public static void ensureConfigFile(Path configDir, Logger log) {
+        Path path = configDir.resolve("sguprofiler.json");
+        if (!Files.exists(path)) {
+            try {
+                Files.createDirectories(configDir);
+                Files.writeString(path, TEMPLATE_JSON, StandardCharsets.UTF_8);
+                log.info("[SGUProfiler] wrote {}", path.toAbsolutePath());
+            } catch (IOException ex) {
+                log.warn("[SGUProfiler] could not create {}: {}", path.toAbsolutePath(), ex.toString());
+            }
+        }
     }
 
     public static SguprofilerConfig load(Path configDir, Logger log) {
@@ -104,20 +113,8 @@ public final class SguprofilerConfig {
             int cool = getInt(o, "autoCooldownTicks", def.autoCooldownTicks);
             TickSampleMode mode = parseMode(getString(o, "tickSampleMode", "STRIDE_OR_HEAVY"), def.tickSampleMode);
             double heavy = getDouble(o, "heavyLastTickMsThreshold", def.heavyLastTickMsThreshold);
-            String host = getString(o, "ingestHost", def.ingestHost);
-            if (host.isBlank()) {
-                host = def.ingestHost;
-            }
-            int port = getInt(o, "ingestPort", def.ingestPort);
-            if (port <= 0 || port > 65535) {
-                port = def.ingestPort;
-                log.warn("[SGUProfiler] invalid ingestPort in config, using {}", port);
-            }
             int perm = getInt(o, "permissionFallbackLevel", def.permissionFallbackLevel);
             perm = Math.clamp(perm, 0, 4);
-            boolean allowPull = getBool(o, "allowlistPullEnabled", def.allowlistPullEnabled);
-            int pollTicks = getInt(o, "allowlistPollTicks", def.allowlistPollTicks);
-            pollTicks = Math.clamp(pollTicks, 20, 72000);
 
             if (mode == TickSampleMode.HEAVY_ONLY && heavy <= 0.0) {
                 log.warn(
@@ -141,11 +138,7 @@ public final class SguprofilerConfig {
                     cool,
                     mode,
                     heavy,
-                    host,
-                    port,
-                    perm,
-                    allowPull,
-                    pollTicks);
+                    perm);
         } catch (IOException | JsonParseException ex) {
             log.warn("[SGUProfiler] could not parse {}, using defaults: {}", path.toAbsolutePath(), ex.toString());
             return def;
@@ -160,17 +153,6 @@ public final class SguprofilerConfig {
             return TickSampleMode.valueOf(raw.strip().toUpperCase());
         } catch (IllegalArgumentException ex) {
             return fallback;
-        }
-    }
-
-    private static boolean getBool(JsonObject o, String key, boolean d) {
-        if (!o.has(key) || !o.get(key).isJsonPrimitive()) {
-            return d;
-        }
-        try {
-            return o.get(key).getAsBoolean();
-        } catch (Exception ex) {
-            return d;
         }
     }
 

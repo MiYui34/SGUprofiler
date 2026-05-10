@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import xin.sgu_server.sguprofiler.AllowlistPuller;
 import xin.sgu_server.sguprofiler.profiler.SGUProfiler;
 
 import java.nio.file.Path;
@@ -21,20 +20,13 @@ public class Main implements ModInitializer {
 
         FabricLoader fl = FabricLoader.getInstance();
         Path configDir = fl.getConfigDir();
-        IngestSecretLoader.ensureConfigTemplate(configDir, LOGGER);
-        byte[] ingestUtf8 = IngestSecretLoader.resolveUtf8(configDir, LOGGER);
-        SGUProfiler.setIngestSecretUtf8(ingestUtf8);
+        SguprofilerConfig.ensureConfigFile(configDir, LOGGER);
         SguprofilerConfig profCfg = SguprofilerConfig.load(configDir, LOGGER);
         SGUProfiler.applyConfig(profCfg);
+        ProfilerCommandWhitelist.init(configDir, LOGGER);
 
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-            SGUProfiler.onServerStarted(server);
-            AllowlistPuller.onServerStarted(server);
-        });
+        ServerLifecycleEvents.SERVER_STARTED.register(SGUProfiler::onServerStarted);
         ServerTickEvents.START_SERVER_TICK.register(SGUProfiler::onStartServerTick);
-        ServerTickEvents.END_SERVER_TICK.register(server -> {
-            SGUProfiler.onEndServerTick(server);
-            AllowlistPuller.onEndServerTick(server);
-        });
+        ServerTickEvents.END_SERVER_TICK.register(SGUProfiler::onEndServerTick);
     }
 }

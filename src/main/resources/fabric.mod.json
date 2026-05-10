@@ -8,7 +8,7 @@
 
   "name": "SGUProfiler",
 
-  "description": "Server-side entity tick profiler with optional upload to the SGUProfiler web panel.",
+  "description": "服务端实体刻采样",
 
   "authors": ["MiYui","AntiDeath"],
 

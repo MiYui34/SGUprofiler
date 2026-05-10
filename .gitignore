@@ -50,15 +50,6 @@ dist/
 
 
 
-# 后端本地数据（运行时生成；保留空目录占位）
-
-backend/data/**
-
-!backend/data/
-
-!backend/data/.gitkeep
-
-
 
 # OS
 

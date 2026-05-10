@@ -6,6 +6,8 @@
   "mixins": [
     "CommandManager_Mixin",
     "Entity_Mixin",
+    "EntityPlayerActionPackAccessor",
+    "EntityPlayerActionPack_Action_Mixin",
     "EntityPlayerActionPack_Mixin",
     "LivingEntity_Mixin",
     "MobEntity_Mixin",
