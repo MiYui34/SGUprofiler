@@ -14,7 +14,7 @@
 
   "license": "MIT",
 
-  "environment": "*",
+  "environment": "server",
 
   "entrypoints": {
 
@@ -32,7 +32,7 @@
 
     "fabricloader": ">=0.16.0",
 
-    "minecraft": "~1.21.6",
+    "minecraft": "~${minecraft_version}",
 
     "java": ">=21",
 
@@ -45,6 +45,12 @@
   "suggests": {
 
     "carpet": "*"
+
+  },
+
+  "custom": {
+
+    "sguprofiler:built_for_minecraft": "${minecraft_version}"
 
   }
 

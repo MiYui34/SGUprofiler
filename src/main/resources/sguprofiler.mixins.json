@@ -4,7 +4,6 @@
   "package": "xin.sgu_server.sguprofiler.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "CommandManager_Mixin",
     "Entity_Mixin",
     "EntityPlayerActionPackAccessor",
     "EntityPlayerActionPack_Action_Mixin",

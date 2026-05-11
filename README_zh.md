@@ -8,12 +8,35 @@
 
 | | 版本 |
 |--|--|
-| Minecraft | 1.21.x（以 `gradle.properties` 为准） |
+| Minecraft | **1.21.6**（版本与依赖见 `gradle.properties`） |
 | Java | 21+ |
 | [Fabric Loader](https://fabricmc.net/) | ≥ 0.16.0 |
 | [Fabric API](https://modrinth.com/mod/fabric-api) | 与游戏版本匹配 |
 
 **可选：** [Carpet](https://github.com/gnembon/fabric-carpet) — 使用 `profile … bot` 及假人攻击/交互等分项时需安装，版本需与当前 MC 兼容。
+
+## 在单人存档中使用
+
+1. **安装环境**  
+   - 使用 **Java 21**。  
+   - 安装 **Fabric Loader**（与游戏版本一致）。  
+   - 从 Modrinth 等安装与当前 MC **同版本**的 **[Fabric API](https://modrinth.com/mod/fabric-api)**。
+
+2. **放入模组**  
+   - 将 **`build/libs`** 中生成的 **`sguprofiler-….jar`** 放进 `.minecraft/mods/`。  
+   - 若要用 **`profile … bot`** 或假人分项：再装与 MC 版本匹配的 **[Carpet](https://modrinth.com/mod/carpet)**。
+
+3. **用 Fabric 启动**  
+   - 在启动器里选择 **Fabric** 配置文件启动游戏，**不要用原版**。
+
+4. **存档与权限**  
+   - 使用采样命令需 **在原版意义上为 OP**（`ops.json` 或 **`/op <你的名字>`**），或已被 OP 写入 **`config/sguprofiler_command_whitelist.json`**。仅「开作弊」但**未** OP、也不在白名单内，则**不能**使用命令（已取消“命令权限 ≥2 即可”的放宽逻辑）。
+
+5. **进游戏后**  
+   - 在聊天输入命令，例如：`/sguprofiler profile start`，结束：`/sguprofiler profile stop`（亦可用 **`/SGUProfiler`** 大写根命令）。  
+   - 配置：`config/sguprofiler.json`；命令白名单：`config/sguprofiler_command_whitelist.json`（路径均在 `.minecraft/config/`）。
+
+若进档报错或命令无反应，先确认**游戏为 1.21.6**、**Fabric API 已装**，并查看 `logs/latest.log` 是否加载了 SGUProfiler。
 
 ## 构建
 
@@ -21,7 +44,7 @@
 ./gradlew build
 ```
 
-生成的 jar：`build/libs/sguprofiler-<版本>.jar`（版本见 `gradle.properties`）。
+打好的 remapped jar 在 **`build/libs/sguprofiler-<mod_version>.jar`**（版本号见 `gradle.properties`）。
 
 ## 配置 `config/sguprofiler.json`
 
@@ -59,7 +82,7 @@
 
 ## 采样命令
 
-根命令：**`/SGUProfiler profile`**
+根命令：**`/SGUProfiler profile`** 或 **`/sguprofiler profile`**（小写别名，二选一）
 
 | 子命令 | 说明 |
 |--------|------|
@@ -69,7 +92,13 @@
 | `start bot <维度…>` | 带维度过滤的 bot 模式。 |
 | `stop` | 结束采样并输出报告；表内为 **实体分项的 ms/采样刻均值**，与 F3/整服 MSPT 含义不同。 |
 
-**OP** 始终可用；普通玩家需 **OP** 或 **白名单**（见上节）。
+**OP** 始终可用；其它玩家仅当其在 **`sguprofiler_command_whitelist.json`** 中时可用。
+
+## 单人存档与「无效的玩家数据」
+
+本模组为 **服务端侧**（`environment: server`），单人世界由**内置服务端**加载即可。命令注册已改为 Fabric 的 `CommandRegistrationCallback`，避免在错误时机往命令分发器里注册命令导致的异常。
+
+若仍出现「无效的玩家数据」，请先**备份存档**，再排查：是否把多人服 `playerdata` 与单机 `level.dat` 混用、是否跨大版本搬档、或其它模组/DataFix 问题；也可暂时移出本模组对比是否仍复现。
 
 ## 许可证
 

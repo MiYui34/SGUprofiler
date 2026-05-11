@@ -4,8 +4,8 @@ import carpet.utils.Messenger;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import com.mojang.authlib.GameProfile;
 import net.minecraft.command.argument.EntityArgumentType;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -83,10 +83,6 @@ public final class ProfilerWhitelistCommands {
     }
 
     private static String profileLabel(MinecraftServer server, UUID u) {
-        return server
-                .getUserCache()
-                .getByUuid(u)
-                .map(GameProfile::getName)
-                .orElseGet(() -> u.toString());
+        return server.getUserCache().getByUuid(u).map(GameProfile::getName).orElseGet(() -> u.toString());
     }
 }

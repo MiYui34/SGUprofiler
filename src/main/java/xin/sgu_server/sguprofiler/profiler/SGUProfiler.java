@@ -174,6 +174,9 @@ public class SGUProfiler {
     }
 
     public static void profile(Entity entity, LagType lagType, long timeCost) {
+        if (entity.getWorld().isClient()) {
+            return;
+        }
         if (botProfilingOnly && !countsTowardBotActionPack(lagType)) {
             return;
         }
