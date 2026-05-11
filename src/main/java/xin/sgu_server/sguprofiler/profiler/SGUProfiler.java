@@ -202,7 +202,11 @@ public class SGUProfiler {
         return Math.max(1L, sessionCompletedTicks);
     }
 
-    private static double nsToAvgMsPerTick(long lagNs) {
+    /**
+     * 实体分项累计纳秒 ÷ 有效采样刻数 → 每采样刻平均毫秒（表内「ms/采样刻」）。
+     * 与 F3 / {@link ServerMspt} 的整刻 wall MSPT 不同，不可直接对比或把多行相加。
+     */
+    private static double nsToAvgProfileMsPerSampledTick(long lagNs) {
         return (double) lagNs / 1_000_000.0D / (double) effectiveTickCount();
     }
 
@@ -319,7 +323,7 @@ public class SGUProfiler {
             for (ProfileKey pk : shownKeys) {
                 LagSource agg = lagSources.get(pk);
                 for (Map.Entry<LagType, Long> le : agg.lags.entrySet()) {
-                    avgStats.accept(nsToAvgMsPerTick(le.getValue()));
+                    avgStats.accept(nsToAvgProfileMsPerSampledTick(le.getValue()));
                 }
             }
 
@@ -340,7 +344,23 @@ public class SGUProfiler {
                     "w " + shownAgg,
                     "f  条（最多 ",
                     "w " + REPORT_TOP_AGGREGATES,
-                    "f  条，按 ms/Tick 降序）");
+                    "f  条，按 ms/采样刻均值降序）");
+            Messenger.m(src, "w ");
+            Messenger.m(
+                    src,
+                    "y [SGUProfiler]",
+                    "w 说明：",
+                    "f 表中为「实体分项」在有效采样刻上的 ms/刻均值，不是 F3/整服 MSPT；多行不可相加对比 MSPT。");
+            if (sampledTickCount > 0 && sampledTickCount < sessionCompletedTicks) {
+                Messenger.m(
+                        src,
+                        "y [SGUProfiler]",
+                        "w 采样：",
+                        "w " + sampledTickCount,
+                        "f 有效采样刻 / ",
+                        "w " + sessionCompletedTicks,
+                        "f 经历刻");
+            }
             Messenger.m(src, "w ");
 
             if (byTotalDesc.isEmpty()) {
@@ -367,7 +387,7 @@ public class SGUProfiler {
 
             for (ProfileKey pk : shownKeys) {
                 LagSource agg = lagSources.get(pk);
-                double entityTotalMs = nsToAvgMsPerTick(agg.sum());
+                double entityTotalMs = nsToAvgProfileMsPerSampledTick(agg.sum());
                 String entityName = pk.type().getName().getString();
                 String dimLab = dimensionLabel(pk.dimension());
 
@@ -384,17 +404,17 @@ public class SGUProfiler {
                         "w " + dimLab,
                         "f  （合计 ",
                         "w " + String.format(Locale.ROOT, "%.3f", entityTotalMs),
-                        "f  ms/Tick · ",
+                        "f  ms/采样刻 · ",
                         "w " + lines.size(),
                         "f  条分项）");
 
                 for (Map.Entry<LagType, Long> line : lines) {
                     LagType lt = line.getKey();
-                    double avg = nsToAvgMsPerTick(line.getValue());
+                    double avg = nsToAvgProfileMsPerSampledTick(line.getValue());
                     String st = carpetStyleForLoad(avg, maxAvg);
                     String label = lagTypeCn(lt);
                     String labelCol = label.length() >= 12 ? label : label + " ".repeat(Math.max(0, 12 - label.length()));
-                    String num = String.format(Locale.ROOT, "%8.3f ms/Tick", avg);
+                    String num = String.format(Locale.ROOT, "%8.3f ms/采样刻", avg);
                     Messenger.m(src, "f      ├ ", st + " " + labelCol, st + " " + num);
                 }
                 Messenger.m(src, "w ");

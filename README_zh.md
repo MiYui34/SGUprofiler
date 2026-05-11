@@ -67,7 +67,7 @@
 | `start overworld` / `nether` / `end` / `all` | 仅统计指定维度。 |
 | `start bot` | 仅 Carpet 假人 ActionPack 相关分项。 |
 | `start bot <维度…>` | 带维度过滤的 bot 模式。 |
-| `stop` | 结束采样，在聊天输出多行报告（含热力色与分项树）。 |
+| `stop` | 结束采样并输出报告；表内为 **实体分项的 ms/采样刻均值**，与 F3/整服 MSPT 含义不同。 |
 
 **OP** 始终可用；普通玩家需 **OP** 或 **白名单**（见上节）。
 

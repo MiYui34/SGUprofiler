@@ -67,7 +67,7 @@ Prefix: **`/SGUProfiler profile`**
 | `start overworld` / `nether` / `end` / `all` | Limit to dimension(s). |
 | `start bot` | Carpet fake-player actions only (`Attack`, `Use`, other pack time). |
 | `start bot <dim…>` | Same as `start bot` with dimension filter. |
-| `stop` | Stop and print a multi-line in-game report (heatmap + breakdown). |
+| `stop` | Stop profiling; print report. Values are **profiled ms per sampled tick** per entity bucket—**not** the server’s whole-tick MSPT from F3/debug; do not sum rows against MSPT. |
 
 Operators always have access; others need OP **or** whitelist (see above).
 
