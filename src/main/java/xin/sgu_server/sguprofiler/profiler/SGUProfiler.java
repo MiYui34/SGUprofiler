@@ -8,6 +8,7 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.world.World;
+import xin.sgu_server.sguprofiler.McCompat;
 import xin.sgu_server.sguprofiler.ServerMspt;
 import xin.sgu_server.sguprofiler.SguprofilerConfig;
 
@@ -174,7 +175,7 @@ public class SGUProfiler {
     }
 
     public static void profile(Entity entity, LagType lagType, long timeCost) {
-        if (entity.getWorld().isClient()) {
+        if (McCompat.worldOf(entity).isClient()) {
             return;
         }
         if (botProfilingOnly && !countsTowardBotActionPack(lagType)) {
@@ -186,7 +187,7 @@ public class SGUProfiler {
         if (config.minProfileNanoseconds > 0 && timeCost < config.minProfileNanoseconds) {
             return;
         }
-        RegistryKey<World> dim = entity.getWorld().getRegistryKey();
+        RegistryKey<World> dim = McCompat.worldOf(entity).getRegistryKey();
         if (allowedDimensions != null && !allowedDimensions.contains(dim)) {
             return;
         }

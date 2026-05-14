@@ -8,6 +8,8 @@
 
   "name": "SGUProfiler",
 
+  "icon": "assets/sguprofiler/icon.png",
+
   "description": "服务端实体刻采样",
 
   "authors": ["MiYui","AntiDeath"],

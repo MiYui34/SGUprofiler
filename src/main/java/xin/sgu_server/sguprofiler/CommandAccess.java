@@ -13,19 +13,19 @@ public final class CommandAccess {
     public static boolean canManageProfilerWhitelist(ServerCommandSource source) {
         ServerPlayerEntity player = source.getPlayer();
         if (player != null) {
-            return player.getServer().getPlayerManager().isOperator(player.getGameProfile());
+            return McCompat.isOperator(McCompat.serverOf(player).getPlayerManager(), player);
         }
-        return source.hasPermissionLevel(4);
+        return McCompat.hasCommandPermissionLevel(source, 4);
     }
 
     public static boolean canUseProfilerCommands(ServerCommandSource source) {
         ServerPlayerEntity player = source.getPlayer();
         if (player != null) {
-            if (player.getServer().getPlayerManager().isOperator(player.getGameProfile())) {
+            if (McCompat.isOperator(McCompat.serverOf(player).getPlayerManager(), player)) {
                 return true;
             }
             return ProfilerCommandWhitelist.contains(player.getUuid());
         }
-        return source.hasPermissionLevel(SGUProfiler.permissionFallbackLevel());
+        return McCompat.hasCommandPermissionLevel(source, SGUProfiler.permissionFallbackLevel());
     }
 }

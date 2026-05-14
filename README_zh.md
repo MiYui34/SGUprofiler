@@ -8,10 +8,12 @@
 
 | | 版本 |
 |--|--|
-| Minecraft | **1.21.6**（版本与依赖见 `gradle.properties`） |
+| Minecraft | **1.21.1**、**1.21.4**、**1.21.6**–**1.21.11**（含 **1.21.10**）；各版本 Yarn / Fabric API / Carpet 见 **`stonecutter.properties.toml`** |
 | Java | 21+ |
-| [Fabric Loader](https://fabricmc.net/) | ≥ 0.16.0 |
+| [Fabric Loader](https://fabricmc.net/) | ≥ 0.16.0（与 `stonecutter.properties.toml` 中 `deps.fabric_loader` 一致） |
 | [Fabric API](https://modrinth.com/mod/fabric-api) | 与游戏版本匹配 |
+
+多版本工程基于 [Stonecutter](https://stonecutter.kikugie.dev/wiki/start/) 与 [loom-back-compat](https://github.com/kikugie/loom-back-compat)；官方 Fabric 模板见 [stonecutter-template-fabric](https://github.com/stonecutter-versioning/stonecutter-template-fabric)。
 
 **可选：** [Carpet](https://github.com/gnembon/fabric-carpet) — 使用 `profile … bot` 及假人攻击/交互等分项时需安装，版本需与当前 MC 兼容。
 
@@ -23,7 +25,7 @@
    - 从 Modrinth 等安装与当前 MC **同版本**的 **[Fabric API](https://modrinth.com/mod/fabric-api)**。
 
 2. **放入模组**  
-   - 将 **`build/libs`** 中生成的 **`sguprofiler-….jar`** 放进 `.minecraft/mods/`。  
+   - 使用与游戏版本一致的 **`sguprofiler-<mod_version>+mc<你的MC>.jar`**（例如一次打出全部版本见下方 **`buildAndCollect`**，产物在 **`build/libs/<mod_version>/`**）。  
    - 若要用 **`profile … bot`** 或假人分项：再装与 MC 版本匹配的 **[Carpet](https://modrinth.com/mod/carpet)**。
 
 3. **用 Fabric 启动**  
@@ -33,18 +35,30 @@
    - 使用采样命令需 **在原版意义上为 OP**（`ops.json` 或 **`/op <你的名字>`**），或已被 OP 写入 **`config/sguprofiler_command_whitelist.json`**。仅「开作弊」但**未** OP、也不在白名单内，则**不能**使用命令（已取消“命令权限 ≥2 即可”的放宽逻辑）。
 
 5. **进游戏后**  
-   - 在聊天输入命令，例如：`/sguprofiler profile start`，结束：`/sguprofiler profile stop`（亦可用 **`/SGUProfiler`** 大写根命令）。  
+   - 在聊天输入命令，例如：`/SGUProfiler profile start`，结束：`/SGUProfiler profile stop`（根字面量区分大小写，须与 **`SGUProfiler`** 一致）。  
    - 配置：`config/sguprofiler.json`；命令白名单：`config/sguprofiler_command_whitelist.json`（路径均在 `.minecraft/config/`）。
 
-若进档报错或命令无反应，先确认**游戏为 1.21.6**、**Fabric API 已装**，并查看 `logs/latest.log` 是否加载了 SGUProfiler。
+若进档报错或命令无反应，先确认 **jar 的 `+mc…` 与游戏版本一致**、**Fabric API 已装**，并查看 `logs/latest.log` 是否加载了 SGUProfiler。
 
-## 构建
+## 构建（Stonecutter）
+
+模组 id / 版本号写在 **`stonecutter.properties.toml`**（根字段 `mod.*`）；各 MC 的 Yarn、Fabric API、Carpet 写在对应 **`["x.y.z"]`** 段。
+
+- **单独某一版本**（示例 1.21.6）：
 
 ```bash
-./gradlew build
+./gradlew :1.21.6:build
 ```
 
-打好的 remapped jar 在 **`build/libs/sguprofiler-<mod_version>.jar`**（版本号见 `gradle.properties`）。
+- **一次构建全部支持版本并汇总 jar**（输出到 **`build/libs/<mod_version>/`**，例如 `build/libs/0.3.2/`）：
+
+```bash
+./gradlew buildAndCollect
+```
+
+本地开发可用 **`stonecutter.gradle.kts`** 中的 `stonecutter active "…"` 与 Gradle 任务 **「Set active project to …」** 切换 IDE 当前版本（说明见 [Stonecutter 入门](https://stonecutter.kikugie.dev/wiki/start/)）。跨小版本的原版 API 差异集中在 **`McCompat`**，用「方法签名」反射适配，避免源码中写 `//?` 与 active 子工程冲突。
+
+根目录 **`gradle.properties`** 仅保留 JVM 等 Gradle 设置；**勿**再在其中写 `minecraft_version`（已由 Stonecutter 管理）。
 
 ## 配置 `config/sguprofiler.json`
 
@@ -82,7 +96,7 @@
 
 ## 采样命令
 
-根命令：**`/SGUProfiler profile`** 或 **`/sguprofiler profile`**（小写别名，二选一）
+根命令：**`/SGUProfiler profile`**
 
 | 子命令 | 说明 |
 |--------|------|

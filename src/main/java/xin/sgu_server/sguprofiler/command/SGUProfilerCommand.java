@@ -16,14 +16,11 @@ public final class SGUProfilerCommand {
     }
 
     public static void registerCommand(CommandDispatcher<ServerCommandSource> dispatcher) {
-        // 每条根字面量单独建树：Brigadier 的 builder 不能安全地挂到多个父节点上
-        for (String rootName : new String[] {"SGUProfiler", "sguprofiler"}) {
-            dispatcher.register(registerRoot(rootName));
-        }
+        dispatcher.register(registerRoot());
     }
 
-    private static LiteralArgumentBuilder<ServerCommandSource> registerRoot(String rootName) {
-        return CommandManager.literal(rootName)
+    private static LiteralArgumentBuilder<ServerCommandSource> registerRoot() {
+        return CommandManager.literal("SGUProfiler")
                 .requires(CommandAccess::canUseProfilerCommands)
                 .then(profileBranch())
                 .then(whitelistBranch());

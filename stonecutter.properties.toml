@@ -1,0 +1,48 @@
+# 见 https://stonecutter.kikugie.dev/wiki/config/properties
+mod.id = "sguprofiler"
+mod.name = "SGUProfiler"
+mod.group = "xin.sgu_server.sguprofiler"
+mod.version = "0.3.2"
+
+deps.fabric_loader = "0.16.14"
+loomx.loom_version = "1.15-SNAPSHOT"
+
+["1.21.1"]
+deps.yarn_mappings = "1.21.1+build.3"
+deps.fabric_api = "0.116.10+1.21.1"
+deps.carpet = "1.4.147"
+
+["1.21.4"]
+deps.yarn_mappings = "1.21.4+build.2"
+deps.fabric_api = "0.119.3+1.21.4"
+deps.carpet = "1.4.161"
+
+["1.21.6"]
+deps.yarn_mappings = "1.21.6+build.1"
+deps.fabric_api = "0.128.2+1.21.6"
+deps.carpet = "1.4.176"
+
+["1.21.7"]
+deps.yarn_mappings = "1.21.7+build.3"
+deps.fabric_api = "0.129.0+1.21.7"
+deps.carpet = "1.4.177"
+
+["1.21.8"]
+deps.yarn_mappings = "1.21.8+build.1"
+deps.fabric_api = "0.131.0+1.21.8"
+deps.carpet = "1.4.177"
+
+["1.21.9"]
+deps.yarn_mappings = "1.21.9+build.1"
+deps.fabric_api = "0.134.0+1.21.9"
+deps.carpet = "1.4.185"
+
+["1.21.10"]
+deps.yarn_mappings = "1.21.10+build.2"
+deps.fabric_api = "0.138.3+1.21.10"
+deps.carpet = "1.4.188"
+
+["1.21.11"]
+deps.yarn_mappings = "1.21.11+build.5"
+deps.fabric_api = "0.141.3+1.21.11"
+deps.carpet = "1.4.194"

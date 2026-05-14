@@ -30,7 +30,7 @@ public class Main implements ModInitializer {
         CommandRegistrationCallback.EVENT.register(
                 (dispatcher, registryAccess, environment) -> {
                     SGUProfilerCommand.registerCommand(dispatcher);
-                    LOGGER.info("[SGUProfiler] 已注册命令：/SGUProfiler …、/sguprofiler …（玩家需 OP 或命令白名单）");
+                    LOGGER.info("[SGUProfiler] 已注册命令：/SGUProfiler …（玩家需 OP 或命令白名单）");
                 });
 
         ServerLifecycleEvents.SERVER_STARTED.register(SGUProfiler::onServerStarted);

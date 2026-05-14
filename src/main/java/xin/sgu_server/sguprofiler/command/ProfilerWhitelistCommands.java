@@ -5,11 +5,11 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.command.argument.EntityArgumentType;
-import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import xin.sgu_server.sguprofiler.McCompat;
 import xin.sgu_server.sguprofiler.ProfilerCommandWhitelist;
 
 import java.util.List;
@@ -83,6 +83,6 @@ public final class ProfilerWhitelistCommands {
     }
 
     private static String profileLabel(MinecraftServer server, UUID u) {
-        return server.getUserCache().getByUuid(u).map(GameProfile::getName).orElseGet(() -> u.toString());
+        return McCompat.findProfileByUuid(server, u).map(McCompat::gameProfileName).orElseGet(() -> u.toString());
     }
 }

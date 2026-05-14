@@ -8,30 +8,44 @@ Server-side Fabric mod that profiles per-entity tick cost (AI, entity tick, move
 
 | | Version |
 |--|--|
-| Minecraft | **1.21.6** (Yarn / deps pinned in `gradle.properties`) |
+| Minecraft | **1.21.1**, **1.21.4**, **1.21.6**–**1.21.11** (including **1.21.10**); per-version Yarn / Fabric API / Carpet: **`stonecutter.properties.toml`** |
 | Java | 21+ |
-| [Fabric Loader](https://fabricmc.net/) | ≥ 0.16.0 |
+| [Fabric Loader](https://fabricmc.net/) | ≥ 0.16.0 (see `deps.fabric_loader` in TOML) |
 | [Fabric API](https://modrinth.com/mod/fabric-api) | matching MC version |
+
+This repo uses [Stonecutter](https://stonecutter.kikugie.dev/wiki/start/) and **loom-back-compat** ([Fabric template](https://github.com/stonecutter-versioning/stonecutter-template-fabric)).
 
 **Optional:** [Carpet](https://github.com/gnembon/fabric-carpet) — enables `profile … bot` and `Attack` / `Use` / other fake-player action categories. Install versions compatible with your Minecraft build.
 
 ## Single-player worlds
 
 1. **Runtime:** Java 21, **Fabric Loader** for your MC version, and matching **[Fabric API](https://modrinth.com/mod/fabric-api)**.  
-2. **Mods folder:** put **`sguprofiler-….jar`** (from `build/libs/`) in `.minecraft/mods/`. Add **[Carpet](https://modrinth.com/mod/carpet)** if you need `profile … bot` / fake-player splits.  
+2. **Mods folder:** use **`sguprofiler-<mod_version>+mcYOUR_MC.jar`** matching the game (build one variant with **`:1.21.6:build`** etc., or all with **`buildAndCollect`** → **`build/libs/<mod_version>/`**). Add **[Carpet](https://modrinth.com/mod/carpet)** if you need `profile … bot` / fake-player splits.  
 3. **Launch** the game with a **Fabric** profile (not vanilla).  
 4. **Permissions:** you must be a vanilla **operator** (`/op YOUR_NAME` or listed in `ops.json`), or listed in **`config/sguprofiler_command_whitelist.json`** by an OP. “Cheats on” without OP and without whitelist entry is **not** enough (the old permission-≥2 bypass was removed).  
-5. **In-game:** e.g. `/sguprofiler profile start` and `… profile stop`. Config: `config/sguprofiler.json`; command whitelist: `config/sguprofiler_command_whitelist.json`.
+5. **In-game:** e.g. `/SGUProfiler profile start` and `… profile stop` (root literal is case-sensitive: use **`SGUProfiler`** exactly). Config: `config/sguprofiler.json`; command whitelist: `config/sguprofiler_command_whitelist.json`.
 
-If something fails, verify the game is **1.21.6**, Fabric API is present, and check `logs/latest.log` for SGUProfiler.
+If something fails, verify the **`+mc…`** jar matches the game, Fabric API is present, and check `logs/latest.log` for SGUProfiler.
 
-## Build
+## Build (Stonecutter)
+
+Mod id and version live in **`stonecutter.properties.toml`** (`mod.*`). Yarn, Fabric Loader, Fabric API, and Carpet per Minecraft version are under each **`["x.y.z"]`** block.
+
+- **One version** (example 1.21.6):
 
 ```bash
-./gradlew build
+./gradlew :1.21.6:build
 ```
 
-Remapped mod jar: **`build/libs/sguprofiler-<mod_version>.jar`** (version from `gradle.properties`).
+- **All supported versions** (remapped jars collected under **`build/libs/<mod_version>/`**, e.g. `build/libs/0.3.2/`):
+
+```bash
+./gradlew buildAndCollect
+```
+
+Use **`stonecutter active "…"`** in **`stonecutter.gradle.kts`** and Gradle **“Set active project to …”** tasks for IDE focus ([getting started](https://stonecutter.kikugie.dev/wiki/start/)). Small Minecraft API differences are handled in **`McCompat`** via signature-based reflection so we do not rely on `//?` blocks (which conflict when the active Stonecutter version equals that subproject).
+
+**`gradle.properties`** keeps JVM settings only; do not pin `minecraft_version` there (Stonecutter owns versions).
 
 ## Configuration
 
@@ -69,7 +83,7 @@ Managing the list is **operators only** (or console with permission level **≥ 
 
 ## Profiling commands
 
-Prefix: **`/SGUProfiler profile`** or **`/sguprofiler profile`** (lowercase alias).
+Prefix: **`/SGUProfiler profile`** (only this root literal is registered).
 
 | Command | Description |
 |---------|-------------|

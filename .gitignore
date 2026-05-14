@@ -4,6 +4,9 @@
 
 build/
 
+# Stonecutter：各 MC 子工程生成源码与构建目录（共享逻辑仍在根目录 src/）
+versions/
+
 out/
 
 *.class
